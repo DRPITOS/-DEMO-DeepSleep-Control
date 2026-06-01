@@ -47,5 +47,16 @@ document.getElementById('btn-toe-up')?.addEventListener('click', () => adjust('t
 document.getElementById('btn-hug-down')?.addEventListener('click', () => adjust('hug', -5));
 document.getElementById('btn-hug-up')?.addEventListener('click', () => adjust('hug', 5));
 
+// --- Reset Button Logic ---
+document.getElementById('btn-reset')?.addEventListener('click', () => {
+    // Reset state values to 0
+    state.head = 0;
+    state.toe = 0;
+    state.hug = 0;
+
+    // Push updates to the UI and Three.js
+    updateUI();
+});
+
 // Run initial UI update
 updateUI();
