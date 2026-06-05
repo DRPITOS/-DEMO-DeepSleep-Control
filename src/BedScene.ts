@@ -1,42 +1,32 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
+// Defines a 4-segment column
+interface BedColumn {
+    torso: THREE.Group;
+    head: THREE.Group;
+    thigh: THREE.Group;
+    foot: THREE.Group;
+}
+
 export class BedScene {
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
     private renderer: THREE.WebGLRenderer;
     private controls: OrbitControls;
 
-    // Bed segments we need to animate
-    private hc!: THREE.Group; private hl!: THREE.Group; private hr!: THREE.Group;
-    private fc!: THREE.Group; private fl!: THREE.Group; private fr!: THREE.Group;
-    private ml!: THREE.Group; private mr!: THREE.Group;
+    // 3 Columns instead of 9 loose segments
+    private leftCol!: BedColumn;
+    private centerCol!: BedColumn;
+    private rightCol!: BedColumn;
 
-    // Animation states
-    private targetRotations = { h: 0, t: 0, hug: 0 };
-    private currentRotations = { h: 0, t: 0, hug: 0 };
-
-    private adjustCameraForScreen() {
-        const aspect = window.innerWidth / window.innerHeight;
-
-        if (aspect < 1) {
-            // Mobile (Portrait Mode): Wider FOV and pulled back further
-            this.camera.fov = 60;
-            this.camera.position.set(250, 220, 320);
-        } else {
-            // Desktop (Landscape Mode): Standard FOV and closer
-            this.camera.fov = 40;
-            this.camera.position.set(150, 120, 160);
-        }
-
-        this.camera.updateProjectionMatrix();
-    }
+    private targetRotations = { h: 0, thigh: 0, f: 0, hug: 0 };
+    private currentRotations = { h: 0, thigh: 0, f: 0, hug: 0 };
 
     constructor(containerId: string) {
         const container = document.getElementById(containerId);
         if (!container) throw new Error(`Container #${containerId} not found`);
 
-        // Basic Setup
         this.scene = new THREE.Scene();
         this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -45,31 +35,25 @@ export class BedScene {
         container.appendChild(this.renderer.domElement);
 
         this.camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.adjustCameraForScreen();
-
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
 
         this.setupLighting();
-        this.buildBed();
+        this.build3x4Bed();
+        this.adjustCameraForScreen();
 
         window.addEventListener('resize', this.onWindowResize.bind(this));
-
-        // Start render loop
         this.animate();
     }
 
     private setupLighting() {
         this.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-
         const dirLight = new THREE.DirectionalLight(0xffdfb0, 1.2);
         dirLight.position.set(100, 150, 80);
         dirLight.castShadow = true;
         dirLight.shadow.mapSize.width = 1024;
         dirLight.shadow.mapSize.height = 1024;
-        dirLight.shadow.camera.near = 0.5;
-        dirLight.shadow.camera.far = 500;
         this.scene.add(dirLight);
 
         const floorMat = new THREE.ShadowMaterial({ opacity: 0.3 });
@@ -80,50 +64,81 @@ export class BedScene {
         this.scene.add(floor);
     }
 
-    private buildBed() {
+    private build3x4Bed() {
         const mattressMat = new THREE.MeshStandardMaterial({ color: 0x2e3036, roughness: 0.9 });
-        const w = 32, hL = 45, tL = 55, fL = 45, thick = 14, gap = 1.5;
 
-        const createSeg = (width: number, length: number, groupX: number, groupZ: number, meshOffsetX: number, meshOffsetZ: number) => {
-            const group = new THREE.Group();
-            group.position.set(groupX, 0, groupZ);
-            const mesh = new THREE.Mesh(new THREE.BoxGeometry(width - gap, thick, length - gap), mattressMat);
-            mesh.position.set(meshOffsetX, thick/2, meshOffsetZ);
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-            group.add(mesh);
-            this.scene.add(group);
-            return group;
+        // New 4-Row Dimensions (Total length remains 145)
+        const w = 32, gap = 1.5, thick = 14;
+        const headL = 40, torsoL = 40, thighL = 30, footL = 35;
+
+        // Mathematical Column Generator
+        const createColumn = (baseX: number, pivotX: number, meshOffsetX: number): BedColumn => {
+            const colGroup = new THREE.Group();
+            colGroup.position.set(baseX + pivotX, 0, 0); // Sets the inward hug hinge point
+
+            const torso = new THREE.Group();
+            colGroup.add(torso);
+
+            const createMesh = (l: number, offsetZ: number) => {
+                const mesh = new THREE.Mesh(new THREE.BoxGeometry(w - gap, thick, l - gap), mattressMat);
+                mesh.position.set(meshOffsetX, thick/2, offsetZ);
+                mesh.castShadow = true; mesh.receiveShadow = true;
+                return mesh;
+            };
+
+            // 1. Torso (Fixed Root)
+            torso.add(createMesh(torsoL, 0));
+
+            // 2. Head (Hinged at top of Torso)
+            const head = new THREE.Group();
+            head.position.set(0, 0, -torsoL/2);
+            head.add(createMesh(headL, -headL/2));
+            torso.add(head);
+
+            // 3. Thigh (Hinged at bottom of Torso)
+            const thigh = new THREE.Group();
+            thigh.position.set(0, 0, torsoL/2);
+            thigh.add(createMesh(thighL, thighL/2));
+            torso.add(thigh);
+
+            // 4. Foot/Calf (Hinged at bottom of Thigh - chained movement!)
+            const foot = new THREE.Group();
+            foot.position.set(0, 0, thighL);
+            foot.add(createMesh(footL, footL/2));
+            thigh.add(foot);
+
+            this.scene.add(colGroup);
+            return { torso, head, thigh, foot };
         };
 
-        this.ml = createSeg(w, tL, -w/2, 0, -w/2, 0);
-        createSeg(w, tL, 0, 0, 0, 0);
-        this.mr = createSeg(w, tL, w/2, 0, w/2, 0);
+        // Generate the 3 columns with offset hinges for perfect folding
+        this.leftCol = createColumn(-w, w/2, -w/2);
+        this.centerCol = createColumn(0, 0, 0);
+        this.rightCol = createColumn(w, -w/2, w/2);
 
-        this.hl = createSeg(w, hL, -w/2, -tL/2, -w/2, -hL/2);
-        this.hc = createSeg(w, hL, 0, -tL/2, 0, -hL/2);
-        this.hr = createSeg(w, hL, w/2, -tL/2, w/2, -hL/2);
-
-        this.fl = createSeg(w, fL, -w/2, tL/2, -w/2, fL/2);
-        this.fc = createSeg(w, fL, 0, tL/2, 0, fL/2);
-        this.fr = createSeg(w, fL, w/2, tL/2, w/2, fL/2);
-
-        const baseMat = new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.6 });
-        const base = new THREE.Mesh(new THREE.BoxGeometry((w*3) + 4, 10, hL+tL+fL + 4), baseMat);
-        base.position.set(0, -5, 0);
+        // Base Frame
+        const base = new THREE.Mesh(
+            new THREE.BoxGeometry((w*3) + 4, 10, headL+torsoL+thighL+footL + 4),
+            new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.6 })
+        );
+        base.position.set(0, -5, 12.5);
         base.castShadow = true;
         this.scene.add(base);
 
-        const pillowMat = new THREE.MeshStandardMaterial({ color: 0xfcecd6, roughness: 1.0 });
-        const pillow = new THREE.Mesh(new THREE.BoxGeometry(32, 6, 16), pillowMat);
-        pillow.position.set(0, thick + 2, -30);
+        // Single Centered Pillow attached to Head
+        const pillow = new THREE.Mesh(
+            new THREE.BoxGeometry(32, 6, 16),
+            new THREE.MeshStandardMaterial({ color: 0xfcecd6, roughness: 1.0 })
+        );
+        pillow.position.set(0, 17, -28);
         pillow.castShadow = true;
-        this.hc.add(pillow);
+        this.centerCol.head.add(pillow);
     }
 
-    public setRotations(headDeg: number, toeDeg: number, hugDeg: number) {
+    public setRotations(headDeg: number, thighDeg: number, footDeg: number, hugDeg: number) {
         this.targetRotations.h = headDeg * (Math.PI / 180);
-        this.targetRotations.t = toeDeg * (Math.PI / 180);
+        this.targetRotations.thigh = thighDeg * (Math.PI / 180);
+        this.targetRotations.f = footDeg * (Math.PI / 180);
         this.targetRotations.hug = hugDeg * (Math.PI / 180);
     }
 
@@ -132,17 +147,40 @@ export class BedScene {
         const lerpSpeed = 0.08;
 
         this.currentRotations.h += (this.targetRotations.h - this.currentRotations.h) * lerpSpeed;
-        this.currentRotations.t += (this.targetRotations.t - this.currentRotations.t) * lerpSpeed;
+        this.currentRotations.thigh += (this.targetRotations.thigh - this.currentRotations.thigh) * lerpSpeed;
+        this.currentRotations.f += (this.targetRotations.f - this.currentRotations.f) * lerpSpeed;
         this.currentRotations.hug += (this.targetRotations.hug - this.currentRotations.hug) * lerpSpeed;
 
-        this.hc.rotation.x = this.hl.rotation.x = this.hr.rotation.x = this.currentRotations.h;
-        this.fc.rotation.x = this.fl.rotation.x = this.fr.rotation.x = -this.currentRotations.t;
+        const { h, thigh, f, hug } = this.currentRotations;
 
-        this.ml.rotation.z = this.hl.rotation.z = this.fl.rotation.z = -this.currentRotations.hug;
-        this.mr.rotation.z = this.hr.rotation.z = this.fr.rotation.z = this.currentRotations.hug;
+        // Apply elevations perfectly across all 3 columns
+        [this.leftCol, this.centerCol, this.rightCol].forEach(col => {
+            col.head.rotation.x = h;
+            col.thigh.rotation.x = -thigh; // Negative X tilts UP
+            col.foot.rotation.x = f;       // Positive X tilts DOWN relative to Thigh
+        });
+
+        // Apply inward Hug
+        this.leftCol.torso.rotation.z = -hug;
+        this.rightCol.torso.rotation.z = hug;
 
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
+    }
+
+    private adjustCameraForScreen() {
+        const aspect = window.innerWidth / window.innerHeight;
+        if (aspect < 1) {
+            this.camera.fov = 60;
+            this.camera.position.set(180, 180, 280);
+            this.controls.target.set(0, -30, 0);
+        } else {
+            this.camera.fov = 40;
+            this.camera.position.set(150, 120, 160);
+            this.controls.target.set(0, 0, 0);
+        }
+        this.controls.update();
+        this.camera.updateProjectionMatrix();
     }
 
     private onWindowResize() {

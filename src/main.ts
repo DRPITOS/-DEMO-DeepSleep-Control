@@ -1,16 +1,17 @@
 import './style.css';
-import { BedScene } from './BedScene';
+import {BedScene} from './BedScene';
 
 // Initialize the 3D Engine
 const bedEngine = new BedScene('canvas-container');
 
-// State and Limits
-type Part = 'head' | 'toe' | 'hug';
-const state: Record<Part, number> = { head: 0, toe: 0, hug: 0 };
+// --- State and Limits ---
+type Part = 'head' | 'thigh' | 'toe' | 'hug';
+const state: Record<Part, number> = {head: 0, thigh: 0, toe: 0, hug: 0};
 const limits: Record<Part, { min: number; max: number }> = {
-    head: { min: 0, max: 60 },
-    toe: { min: 0, max: 40 },
-    hug: { min: 0, max: 35 }
+    head: {min: 0, max: 60},
+    thigh: {min: 0, max: 45}, // New Thigh limit
+    toe: {min: 0, max: 40},   // This now controls the downward knee bend
+    hug: {min: 0, max: 35}
 };
 
 function adjust(part: Part, amount: number) {
@@ -22,24 +23,26 @@ function adjust(part: Part, amount: number) {
 }
 
 function updateUI() {
-    // Update Text Labels
     (document.getElementById('head-val') as HTMLElement).innerText = `${state.head}°`;
+    (document.getElementById('thigh-val') as HTMLElement).innerText = `${state.thigh}°`;
     (document.getElementById('toe-val') as HTMLElement).innerText = `${state.toe}°`;
     (document.getElementById('hug-val') as HTMLElement).innerText = `${state.hug}°`;
 
-    // Disable buttons at limits
-    (['head', 'toe', 'hug'] as Part[]).forEach(part => {
+    (['head', 'thigh', 'toe', 'hug'] as Part[]).forEach(part => {
         (document.getElementById(`btn-${part}-down`) as HTMLButtonElement).disabled = (state[part] === limits[part].min);
         (document.getElementById(`btn-${part}-up`) as HTMLButtonElement).disabled = (state[part] === limits[part].max);
     });
 
-    // Send new data to Three.js
-    bedEngine.setRotations(state.head, state.toe, state.hug);
+    // Send 4 data points to Three.js now
+    bedEngine.setRotations(state.head, state.thigh, state.toe, state.hug);
 }
 
-// Bind Event Listeners
+// --- Bind Event Listeners ---
 document.getElementById('btn-head-down')?.addEventListener('click', () => adjust('head', -5));
 document.getElementById('btn-head-up')?.addEventListener('click', () => adjust('head', 5));
+
+document.getElementById('btn-thigh-down')?.addEventListener('click', () => adjust('thigh', -5));
+document.getElementById('btn-thigh-up')?.addEventListener('click', () => adjust('thigh', 5));
 
 document.getElementById('btn-toe-down')?.addEventListener('click', () => adjust('toe', -5));
 document.getElementById('btn-toe-up')?.addEventListener('click', () => adjust('toe', 5));
@@ -47,16 +50,12 @@ document.getElementById('btn-toe-up')?.addEventListener('click', () => adjust('t
 document.getElementById('btn-hug-down')?.addEventListener('click', () => adjust('hug', -5));
 document.getElementById('btn-hug-up')?.addEventListener('click', () => adjust('hug', 5));
 
-// --- Reset Button Logic ---
 document.getElementById('btn-reset')?.addEventListener('click', () => {
-    // Reset state values to 0
     state.head = 0;
+    state.thigh = 0;
     state.toe = 0;
     state.hug = 0;
-
-    // Push updates to the UI and Three.js
     updateUI();
 });
 
-// Run initial UI update
 updateUI();
