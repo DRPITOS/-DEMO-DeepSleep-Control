@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 
 // Defines a 4-segment column
 interface BedColumn {
@@ -20,15 +20,15 @@ export class BedScene {
     private centerCol!: BedColumn;
     private rightCol!: BedColumn;
 
-    private targetRotations = { h: 0, thigh: 0, f: 0, hug: 0 };
-    private currentRotations = { h: 0, thigh: 0, f: 0, hug: 0 };
+    private targetRotations = {h: 0, thigh: 0, f: 0, hug: 0};
+    private currentRotations = {h: 0, thigh: 0, f: 0, hug: 0};
 
     constructor(containerId: string) {
         const container = document.getElementById(containerId);
         if (!container) throw new Error(`Container #${containerId} not found`);
 
         this.scene = new THREE.Scene();
-        this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        this.renderer = new THREE.WebGLRenderer({alpha: true, antialias: true});
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -56,7 +56,7 @@ export class BedScene {
         dirLight.shadow.mapSize.height = 1024;
         this.scene.add(dirLight);
 
-        const floorMat = new THREE.ShadowMaterial({ opacity: 0.3 });
+        const floorMat = new THREE.ShadowMaterial({opacity: 0.3});
         const floor = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), floorMat);
         floor.rotation.x = -Math.PI / 2;
         floor.position.y = -15;
@@ -65,7 +65,7 @@ export class BedScene {
     }
 
     private build3x4Bed() {
-        const mattressMat = new THREE.MeshStandardMaterial({ color: 0x2e3036, roughness: 0.9 });
+        const mattressMat = new THREE.MeshStandardMaterial({color: 0x2e3036, roughness: 0.9});
 
         // New 4-Row Dimensions (Total length remains 145)
         const w = 32, gap = 1.5, thick = 14;
@@ -81,8 +81,9 @@ export class BedScene {
 
             const createMesh = (l: number, offsetZ: number) => {
                 const mesh = new THREE.Mesh(new THREE.BoxGeometry(w - gap, thick, l - gap), mattressMat);
-                mesh.position.set(meshOffsetX, thick/2, offsetZ);
-                mesh.castShadow = true; mesh.receiveShadow = true;
+                mesh.position.set(meshOffsetX, thick / 2, offsetZ);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
                 return mesh;
             };
 
@@ -91,35 +92,35 @@ export class BedScene {
 
             // 2. Head (Hinged at top of Torso)
             const head = new THREE.Group();
-            head.position.set(0, 0, -torsoL/2);
-            head.add(createMesh(headL, -headL/2));
+            head.position.set(0, 0, -torsoL / 2);
+            head.add(createMesh(headL, -headL / 2));
             torso.add(head);
 
             // 3. Thigh (Hinged at bottom of Torso)
             const thigh = new THREE.Group();
-            thigh.position.set(0, 0, torsoL/2);
-            thigh.add(createMesh(thighL, thighL/2));
+            thigh.position.set(0, 0, torsoL / 2);
+            thigh.add(createMesh(thighL, thighL / 2));
             torso.add(thigh);
 
             // 4. Foot/Calf (Hinged at bottom of Thigh - chained movement!)
             const foot = new THREE.Group();
             foot.position.set(0, 0, thighL);
-            foot.add(createMesh(footL, footL/2));
+            foot.add(createMesh(footL, footL / 2));
             thigh.add(foot);
 
             this.scene.add(colGroup);
-            return { torso, head, thigh, foot };
+            return {torso, head, thigh, foot};
         };
 
         // Generate the 3 columns with offset hinges for perfect folding
-        this.leftCol = createColumn(-w, w/2, -w/2);
+        this.leftCol = createColumn(-w, w / 2, -w / 2);
         this.centerCol = createColumn(0, 0, 0);
-        this.rightCol = createColumn(w, -w/2, w/2);
+        this.rightCol = createColumn(w, -w / 2, w / 2);
 
         // Base Frame
         const base = new THREE.Mesh(
-            new THREE.BoxGeometry((w*3) + 4, 10, headL+torsoL+thighL+footL + 4),
-            new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.6 })
+            new THREE.BoxGeometry((w * 3) + 4, 10, headL + torsoL + thighL + footL + 4),
+            new THREE.MeshStandardMaterial({color: 0x5d4037, roughness: 0.6})
         );
         base.position.set(0, -5, 12.5);
         base.castShadow = true;
@@ -128,7 +129,7 @@ export class BedScene {
         // Single Centered Pillow attached to Head
         const pillow = new THREE.Mesh(
             new THREE.BoxGeometry(32, 6, 16),
-            new THREE.MeshStandardMaterial({ color: 0xfcecd6, roughness: 1.0 })
+            new THREE.MeshStandardMaterial({color: 0xfcecd6, roughness: 1.0})
         );
         pillow.position.set(0, 17, -28);
         pillow.castShadow = true;
@@ -138,7 +139,10 @@ export class BedScene {
     public setRotations(headDeg: number, thighDeg: number, footDeg: number, hugDeg: number) {
         this.targetRotations.h = headDeg * (Math.PI / 180);
         this.targetRotations.thigh = thighDeg * (Math.PI / 180);
-        this.targetRotations.f = footDeg * (Math.PI / 180);
+
+        // Add the minus sign here! Negative UI value = Downward 3D bend
+        this.targetRotations.f = -footDeg * (Math.PI / 180);
+
         this.targetRotations.hug = hugDeg * (Math.PI / 180);
     }
 
@@ -151,7 +155,7 @@ export class BedScene {
         this.currentRotations.f += (this.targetRotations.f - this.currentRotations.f) * lerpSpeed;
         this.currentRotations.hug += (this.targetRotations.hug - this.currentRotations.hug) * lerpSpeed;
 
-        const { h, thigh, f, hug } = this.currentRotations;
+        const {h, thigh, f, hug} = this.currentRotations;
 
         // Apply elevations perfectly across all 3 columns
         [this.leftCol, this.centerCol, this.rightCol].forEach(col => {
@@ -166,6 +170,49 @@ export class BedScene {
 
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
+    }
+
+    public resetCamera() {
+        const aspect = window.innerWidth / window.innerHeight;
+
+        const targetPos = new THREE.Vector3();
+        const targetFocus = new THREE.Vector3();
+
+        if (aspect < 1) {
+            // Mobile defaults
+            targetPos.set(180, 180, 280);
+            // YOUR CUSTOM PERFECT COORDINATES
+            targetFocus.set(-15, -140, 0);
+        } else {
+            // Desktop defaults
+            targetPos.set(150, 120, 160);
+            targetFocus.set(0, 0, 0);
+        }
+
+        const startPos = this.camera.position.clone();
+        const startFocus = this.controls.target.clone();
+
+        let progress = 0;
+
+        const smoothMove = () => {
+            progress += 0.03;
+
+            if (progress < 1) {
+                const ease = 1 - Math.pow(1 - progress, 3);
+
+                this.camera.position.lerpVectors(startPos, targetPos, ease);
+                this.controls.target.lerpVectors(startFocus, targetFocus, ease);
+
+                this.controls.update();
+                requestAnimationFrame(smoothMove);
+            } else {
+                this.camera.position.copy(targetPos);
+                this.controls.target.copy(targetFocus);
+                this.controls.update();
+            }
+        };
+
+        smoothMove();
     }
 
     private adjustCameraForScreen() {
