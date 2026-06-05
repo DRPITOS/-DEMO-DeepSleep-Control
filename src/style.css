@@ -53,7 +53,7 @@ html, body {
 
 /* Header */
 .ui-header {
-  padding: 50px 24px 20px 24px;
+  padding: 20px 24px 20px 24px;
   pointer-events: auto;
 }
 
@@ -218,21 +218,22 @@ button svg {
   background: rgba(255, 255, 255, 0.6);
 }
 
-/* Bottom Navigation */
+/* --- Bottom Navigation (Slimmer Version) --- */
 .bottom-nav {
   background: var(--card-bg);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 20px 24px 30px 24px;
+  /* Reduced padding: top, right, bottom (leaves a little room for iOS home bar), left */
+  padding: 7px 24px 7px 24px;
   box-shadow: 0 -10px 30px rgba(0,0,0,0.03);
   pointer-events: auto;
-  border-radius: 30px 30px 0 0;
+  border-radius: 24px 24px 0 0; /* Slightly tighter curves */
 }
 
 .nav-item {
-  width: 48px;
-  height: 48px;
+  width: 40px; /* Shrunk from 48px */
+  height: 40px; /* Shrunk from 48px */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -242,8 +243,8 @@ button svg {
 }
 
 .nav-item svg {
-  width: 24px;
-  height: 24px;
+  width: 22px; /* Slightly smaller icons */
+  height: 22px;
 }
 
 .nav-item.active {
