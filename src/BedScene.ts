@@ -32,7 +32,7 @@ export class BedScene {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.shadowMap.type = THREE.PCFShadowMap;
         container.appendChild(this.renderer.domElement);
 
         this.camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -44,7 +44,23 @@ export class BedScene {
         this.build3x4Bed();
         this.adjustCameraForScreen();
 
-        window.addEventListener('resize', this.onWindowResize.bind(this));
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const width = entry.contentRect.width;
+                const height = entry.contentRect.height;
+
+                // Prevent crashing if the container is temporarily hidden (0x0)
+                if (width > 0 && height > 0) {
+                    this.camera.aspect = width / height;
+                    this.adjustCameraForScreen();
+                    this.renderer.setSize(width, height);
+                    this.controls.update();
+                    this.renderer.render(this.scene, this.camera);
+                }
+            }
+        });
+
+        resizeObserver.observe(container);
         this.animate();
     }
 
@@ -217,13 +233,12 @@ export class BedScene {
     }
 
     private adjustCameraForScreen() {
-        const aspect = window.innerWidth / window.innerHeight;
+        const aspect = this.camera.aspect;
+
         if (aspect < 1) {
             this.camera.fov = 60;
             this.camera.position.set(180, 180, 280);
-
-            // MAGIC NUMBER: Change the middle value to -60 to push the bed up
-            this.controls.target.set(-15, -140, 0);
+            this.controls.target.set(-15, -140, 0); // Your custom perfect coordinates
         } else {
             this.camera.fov = 40;
             this.camera.position.set(150, 120, 160);
@@ -231,11 +246,5 @@ export class BedScene {
         }
         this.controls.update();
         this.camera.updateProjectionMatrix();
-    }
-
-    private onWindowResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.adjustCameraForScreen();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 }

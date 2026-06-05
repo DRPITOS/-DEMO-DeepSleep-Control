@@ -1,4 +1,4 @@
-import { BedScene } from './BedScene';
+import {BedScene} from './BedScene';
 import './style.css';
 
 const bedEngine = new BedScene('canvas-container');
@@ -7,15 +7,15 @@ const bedEngine = new BedScene('canvas-container');
 type Part = 'head' | 'thigh' | 'toe' | 'hug';
 
 // The actual target angles for the bed
-const state: Record<Part, number> = { head: 0, thigh: 0, toe: 0, hug: 0 };
+const state: Record<Part, number> = {head: 0, thigh: 0, toe: 0, hug: 0};
 // The numbers currently visible on the screen
-const displayState: Record<Part, number> = { head: 0, thigh: 0, toe: 0, hug: 0 };
+const displayState: Record<Part, number> = {head: 0, thigh: 0, toe: 0, hug: 0};
 
 const limits: Record<Part, { min: number; max: number }> = {
-    head: { min: 0, max: 60 },
-    thigh: { min: 0, max: 45 },
-    toe: { min: -45, max: 40 },
-    hug: { min: 0, max: 35 }
+    head: {min: 0, max: 60},
+    thigh: {min: 0, max: 45},
+    toe: {min: -45, max: 40},
+    hug: {min: 0, max: 35}
 };
 
 function adjust(part: Part, amount: number) {
@@ -29,16 +29,14 @@ function adjust(part: Part, amount: number) {
         if (newVal < minAllowed) newVal = minAllowed;
 
         state.toe = newVal;
-    }
-    else if (part === 'thigh') {
+    } else if (part === 'thigh') {
         if (newVal > limits.thigh.max) newVal = limits.thigh.max;
         if (newVal < limits.thigh.min) newVal = limits.thigh.min;
         state.thigh = newVal;
 
         if (state.thigh > 0 && state.toe > 0) state.toe = 0;
         if (state.toe < -state.thigh) state.toe = -state.thigh;
-    }
-    else {
+    } else {
         if (newVal > limits[part].max) newVal = limits[part].max;
         if (newVal < limits[part].min) newVal = limits[part].min;
         state[part] = newVal;
@@ -115,10 +113,13 @@ document.getElementById('btn-hug-down')?.addEventListener('click', () => adjust(
 document.getElementById('btn-hug-up')?.addEventListener('click', () => adjust('hug', 5));
 
 document.getElementById('btn-reset')?.addEventListener('click', () => {
-    state.head = 0; state.thigh = 0; state.toe = 0; state.hug = 0;
+    state.head = 0;
+    state.thigh = 0;
+    state.toe = 0;
+    state.hug = 0;
     updateUI();
     // @ts-ignore - Assuming you added resetCamera to BedScene.ts previously
-    if(typeof bedEngine.resetCamera === 'function') bedEngine.resetCamera();
+    if (typeof bedEngine.resetCamera === 'function') bedEngine.resetCamera();
 });
 
 // Initial boot

@@ -1,252 +1,268 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg-color: #f7f7f9;
-  --card-bg: #ffffff;
-  --text-main: #1c1c1e;
-  --text-muted: #8e8e93;
-  --primary: #000000;
-  --btn-bg: #f2f2f7;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    --bg-color: #f7f7f9;
+    --card-bg: #ffffff;
+    --text-main: #1c1c1e;
+    --text-muted: #8e8e93;
+    --primary: #000000;
+    --btn-bg: #f2f2f7;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
 }
 
 html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: linear-gradient(to bottom, #ffffff 0%, #fdf4d6 100%) !important;
-  font-family: 'Google Sans', 'Product Sans', 'Outfit', sans-serif;
-  color: var(--text-main);
-  -webkit-font-smoothing: antialiased;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: linear-gradient(to bottom, #ffffff 0%, #fdf4d6 100%) !important;
+    font-family: 'Google Sans', 'Product Sans', 'Outfit', sans-serif;
+    color: var(--text-main);
+    -webkit-font-smoothing: antialiased;
 }
 
 /* 3D Canvas */
 #canvas-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 1;
-  cursor: grab;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    cursor: grab;
 }
 
 #canvas-container:active {
-  cursor: grabbing;
+    cursor: grabbing;
 }
 
 /* UI Overlay - Allows clicks to pass through to the 3D canvas where there are no controls */
 .app-ui {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 10;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 /* Header */
 .ui-header {
-  padding: 20px 24px 20px 24px;
-  pointer-events: auto;
+    padding: 20px 24px 20px 24px;
+    pointer-events: auto;
 }
 
 .ui-header h1 {
-  margin: 0;
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--text-main);
-  letter-spacing: -0.5px;
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.5px;
 }
 
 .wave {
-  display: inline-block;
-  animation: wave-animation 2.5s infinite;
-  transform-origin: 70% 70%;
+    display: inline-block;
+    animation: wave-animation 2.5s infinite;
+    transform-origin: 70% 70%;
 }
 
 @keyframes wave-animation {
-  0% { transform: rotate( 0.0deg) }
-  10% { transform: rotate(14.0deg) }
-  20% { transform: rotate(-8.0deg) }
-  30% { transform: rotate(14.0deg) }
-  40% { transform: rotate(-4.0deg) }
-  50% { transform: rotate(10.0deg) }
-  60% { transform: rotate( 0.0deg) }
-  100% { transform: rotate( 0.0deg) }
+    0% {
+        transform: rotate(0.0deg)
+    }
+    10% {
+        transform: rotate(14.0deg)
+    }
+    20% {
+        transform: rotate(-8.0deg)
+    }
+    30% {
+        transform: rotate(14.0deg)
+    }
+    40% {
+        transform: rotate(-4.0deg)
+    }
+    50% {
+        transform: rotate(10.0deg)
+    }
+    60% {
+        transform: rotate(0.0deg)
+    }
+    100% {
+        transform: rotate(0.0deg)
+    }
 }
 
 .ui-header p {
-  margin: 8px 0 0 0;
-  font-size: 1rem;
-  color: var(--text-muted);
-  font-weight: 500;
+    margin: 8px 0 0 0;
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-weight: 500;
 }
 
 /* Controls Grid - Now a vertical stack of single-line items */
 .controls-grid {
-  padding: 0 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  pointer-events: auto;
-  margin-top: auto; /* <--- THIS IS THE MAGIC LINE */
-  margin-bottom: 20px;
-  width: 100%;
-  box-sizing: border-box;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: auto;
+    margin-top: auto; /* <--- THIS IS THE MAGIC LINE */
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Translucent, single-line glass card */
 .control-card {
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 18px;
-  padding: 12px 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: row; /* Keeps the icon, text, and buttons aligned side-by-side */
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 18px;
+    padding: 12px 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: row; /* Keeps the icon, text, and buttons aligned side-by-side */
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .card-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 0; /* Removed bottom margin for 1-line fit */
-  width: 100px; /* Fixed width so all values align perfectly */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0; /* Removed bottom margin for 1-line fit */
+    width: 100px; /* Fixed width so all values align perfectly */
 }
 
 .icon-box {
-  width: 32px; /* Smaller icon box */
-  height: 32px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1rem;
+    width: 32px; /* Smaller icon box */
+    height: 32px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1rem;
 }
 
 .control-label {
-  font-weight: 600;
-  font-size: 0.85rem; /* Smaller text */
-  color: var(--text-main); /* Darker text for glass readability */
+    font-weight: 600;
+    font-size: 0.85rem; /* Smaller text */
+    color: var(--text-main); /* Darker text for glass readability */
 }
 
 .control-value {
-  font-size: 1.1rem; /* Smaller degree text */
-  font-weight: 700;
-  margin-bottom: 0;
-  width: 35px; /* Fixed width to prevent jumping when numbers change */
-  text-align: right;
+    font-size: 1.1rem; /* Smaller degree text */
+    font-weight: 700;
+    margin-bottom: 0;
+    width: 35px; /* Fixed width to prevent jumping when numbers change */
+    text-align: right;
 }
 
 .button-group {
-  display: flex;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.5); /* Inner glass well */
-  border-radius: 12px;
-  padding: 3px;
+    display: flex;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.5); /* Inner glass well */
+    border-radius: 12px;
+    padding: 3px;
 }
 
 button {
-  touch-action: manipulation;
-  background: transparent;
-  border: none;
-  color: var(--text-main);
-  width: 36px; /* Smaller buttons */
-  height: 36px;
-  border-radius: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  transition: background 0.2s;
+    touch-action: manipulation;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    width: 36px; /* Smaller buttons */
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
 button:hover {
-  background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.05);
 }
 
 button:active {
-  background: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.1);
 }
 
 button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
+    opacity: 0.3;
+    cursor: not-allowed;
 }
 
 button svg {
-  width: 18px; /* Smaller chevrons */
-  height: 18px;
+    width: 18px; /* Smaller chevrons */
+    height: 18px;
 }
 
 /* Reset Button - Matched to new glass theme */
 .reset-card {
-  width: 100%; /* <--- Force full width */
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
-  border-radius: 18px;
-  height: 48px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  gap: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 5px;
-  box-sizing: border-box;
-  cursor: pointer;
+    width: 100%; /* <--- Force full width */
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    border-radius: 18px;
+    height: 48px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    gap: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 5px;
+    box-sizing: border-box;
+    cursor: pointer;
 }
 
 .reset-card:hover {
-  background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.6);
 }
 
 /* --- Bottom Navigation (Slimmer Version) --- */
 .bottom-nav {
-  background: var(--card-bg);
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  /* Reduced padding: top, right, bottom (leaves a little room for iOS home bar), left */
-  padding: 7px 24px 7px 24px;
-  box-shadow: 0 -10px 30px rgba(0,0,0,0.03);
-  pointer-events: auto;
-  border-radius: 24px 24px 0 0; /* Slightly tighter curves */
+    background: var(--card-bg);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    /* Reduced padding: top, right, bottom (leaves a little room for iOS home bar), left */
+    padding: 7px 24px 7px 24px;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.03);
+    pointer-events: auto;
+    border-radius: 24px 24px 0 0; /* Slightly tighter curves */
 }
 
 .nav-item {
-  width: 40px; /* Shrunk from 48px */
-  height: 40px; /* Shrunk from 48px */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: color 0.2s;
+    width: 40px; /* Shrunk from 48px */
+    height: 40px; /* Shrunk from 48px */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.2s;
 }
 
 .nav-item svg {
-  width: 22px; /* Slightly smaller icons */
-  height: 22px;
+    width: 22px; /* Slightly smaller icons */
+    height: 22px;
 }
 
 .nav-item.active {
-  color: var(--primary);
+    color: var(--primary);
 }
