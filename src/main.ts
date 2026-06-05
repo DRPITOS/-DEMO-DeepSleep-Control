@@ -18,6 +18,38 @@ const limits: Record<Part, { min: number; max: number }> = {
     hug: {min: 0, max: 35}
 };
 
+const bedAngles = {
+    head: 0,
+    toe: 0,
+    thigh: 0,
+    hug: 0
+};
+
+// Function to send data
+async function updateBedPosition() {
+    try {
+        const response = await fetch('/api/bed-position', {
+            method: 'POST', // Use POST for sending data
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            // Send the actual 'state' object that holds your angles
+            body: JSON.stringify(state),
+        });
+        const result = await response.json();
+        console.log('Server response:', result);
+    } catch (error) {
+        console.error('Error sending position:', error);
+    }
+}
+
+// Attach this to your button click listeners
+document.getElementById('btn-head-up')?.addEventListener('click', () => {
+    bedAngles.head += 5; // Example logic
+    document.getElementById('head-val')!.innerText = `${bedAngles.head}°`;
+    updateBedPosition(); // SEND AFTER CHANGE
+});
+
 function adjust(part: Part, amount: number) {
     let newVal = state[part] + amount;
 
@@ -43,6 +75,7 @@ function adjust(part: Part, amount: number) {
     }
 
     updateUI();
+    updateBedPosition()
 }
 
 // --- Animation Loop for the UI Text ---
