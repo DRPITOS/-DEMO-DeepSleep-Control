@@ -1,14 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
 
 :root {
-  --primary: #c99f3b;
-  --primary-hover: #e3c06e;
-  --text-main: #f8fafc;
-  --text-muted: #a0aec0;
-  --brass-start: #d4af37;
-  --brass-end: #b59410;
-  --glow-color: rgba(201, 159, 59, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --bg-color: #f7f7f9;
+  --card-bg: #ffffff;
+  --text-main: #1c1c1e;
+  --text-muted: #8e8e93;
+  --primary: #000000;
+  --btn-bg: #f2f2f7;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
 }
 
 html, body {
@@ -17,15 +16,13 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: linear-gradient(to bottom, #fce6a8 0%, #d9a06f 30%, #a07a62 70%) !important;
-  color: var(--text-main);
-
+  background: linear-gradient(to bottom, #ffffff 0%, #fdf4d6 100%) !important;
   font-family: 'Google Sans', 'Product Sans', 'Outfit', sans-serif;
+  color: var(--text-main);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* 3D Canvas Container */
+/* 3D Canvas */
 #canvas-container {
   position: absolute;
   top: 0;
@@ -40,166 +37,215 @@ html, body {
   cursor: grabbing;
 }
 
-/* Floating Header */
-.ui-header {
+/* UI Overlay - Allows clicks to pass through to the 3D canvas where there are no controls */
+.app-ui {
   position: absolute;
-  top: 30px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 10;
-  text-align: center;
-  background: rgba(25, 25, 35, 0.6);
-  backdrop-filter: blur(10px);
-  padding: 15px 35px;
-  border-radius: 20px;
-  border: 1px solid var(--glass-border);
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Header */
+.ui-header {
+  padding: 50px 24px 20px 24px;
+  pointer-events: auto;
 }
 
 .ui-header h1 {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.8rem;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--text-main);
   letter-spacing: -0.5px;
 }
 
-.ui-header p {
-  margin: 4px 0 0 0;
-  font-size: 0.85rem;
-  color: var(--text-muted);
+.wave {
+  display: inline-block;
+  animation: wave-animation 2.5s infinite;
+  transform-origin: 70% 70%;
 }
 
-/* Floating Controls Panel */
-.controls {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
-  max-width: 400px;
-  z-index: 10;
-  background: linear-gradient(to top, rgba(15, 15, 25, 0.85), rgba(20, 20, 30, 0.6));
-  backdrop-filter: blur(15px);
-  padding: 24px;
-  border-radius: 24px;
-  border-top: 1px solid var(--glass-border);
-  border-left: 1px solid var(--glass-border);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-  display: grid;
-  gap: 15px;
+@keyframes wave-animation {
+  0% { transform: rotate( 0.0deg) }
+  10% { transform: rotate(14.0deg) }
+  20% { transform: rotate(-8.0deg) }
+  30% { transform: rotate(14.0deg) }
+  40% { transform: rotate(-4.0deg) }
+  50% { transform: rotate(10.0deg) }
+  60% { transform: rotate( 0.0deg) }
+  100% { transform: rotate( 0.0deg) }
+}
+
+.ui-header p {
+  margin: 8px 0 0 0;
+  font-size: 1rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Controls Grid - Now a vertical stack of single-line items */
+.controls-grid {
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: auto;
+  margin-top: auto; /* <--- THIS IS THE MAGIC LINE */
+  margin-bottom: 20px;
+  width: 100%;
   box-sizing: border-box;
 }
 
-.controls-title {
-  text-align: center;
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--primary);
-  margin-bottom: 5px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.control-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.03);
+/* Translucent, single-line glass card */
+.control-card {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 18px;
   padding: 12px 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.02);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: row; /* Keeps the icon, text, and buttons aligned side-by-side */
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.control-info {
+.card-header {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0; /* Removed bottom margin for 1-line fit */
+  width: 100px; /* Fixed width so all values align perfectly */
+}
+
+.icon-box {
+  width: 32px; /* Smaller icon box */
+  height: 32px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1rem;
 }
 
 .control-label {
-  font-size: 0.85rem;
   font-weight: 600;
-  color: var(--primary);
-  text-transform: uppercase;
+  font-size: 0.85rem; /* Smaller text */
+  color: var(--text-main); /* Darker text for glass readability */
 }
 
 .control-value {
-  font-size: 1.2rem;
+  font-size: 1.1rem; /* Smaller degree text */
   font-weight: 700;
-  color: #fff;
-  margin-top: 2px;
-  text-shadow: 0 0 10px var(--glow-color);
+  margin-bottom: 0;
+  width: 35px; /* Fixed width to prevent jumping when numbers change */
+  text-align: right;
 }
 
 .button-group {
   display: flex;
-  gap: 10px;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.5); /* Inner glass well */
+  border-radius: 12px;
+  padding: 3px;
 }
 
 button {
   touch-action: manipulation;
-
-  background:
-          radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 80%),
-          linear-gradient(45deg, var(--brass-start) 0%, var(--brass-end) 100%),
-          #d4af37;
+  background: transparent;
   border: none;
-  color: #222;
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
+  color: var(--text-main);
+  width: 36px; /* Smaller buttons */
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-  box-shadow:
-          inset 0 -2px 10px rgba(0,0,0,0.1),
-          inset 0 2px 10px rgba(255,255,255,0.2),
-          2px 4px 10px rgba(0,0,0,0.3);
+  transition: background 0.2s;
 }
 
 button:hover {
-  transform: scale(1.05) translateY(-2px);
-  background: linear-gradient(45deg, var(--primary-hover) 0%, var(--primary) 100%);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 button:active {
-  transform: scale(0.95);
+  background: rgba(0, 0, 0, 0.1);
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: 0.3;
   cursor: not-allowed;
-  background: linear-gradient(45deg, #a08a5a 0%, #8a664d 100%);
-  transform: none;
 }
 
 button svg {
+  width: 18px; /* Smaller chevrons */
+  height: 18px;
+}
+
+/* Reset Button - Matched to new glass theme */
+.reset-card {
+  width: 100%; /* <--- Force full width */
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  border-radius: 18px;
+  height: 48px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  gap: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 5px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.reset-card:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+  background: var(--card-bg);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 20px 24px 30px 24px;
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.03);
+  pointer-events: auto;
+  border-radius: 30px 30px 0 0;
+}
+
+.nav-item {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.nav-item svg {
   width: 24px;
   height: 24px;
 }
 
-/* --- Reset Button Styles --- */
-.reset-row {
-  background: transparent;
-  border: none;
-  padding: 0;
-  margin-top: 5px;
-}
-
-.reset-btn {
-  width: 100%;
-  height: 42px;
-  gap: 10px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #222;
-}
-
-.reset-btn svg {
-  width: 18px;
-  height: 18px;
+.nav-item.active {
+  color: var(--primary);
 }

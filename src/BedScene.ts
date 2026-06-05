@@ -173,7 +173,9 @@ export class BedScene {
         if (aspect < 1) {
             this.camera.fov = 60;
             this.camera.position.set(180, 180, 280);
-            this.controls.target.set(0, -30, 0);
+
+            // MAGIC NUMBER: Change the middle value to -60 to push the bed up
+            this.controls.target.set(-15, -140, 0);
         } else {
             this.camera.fov = 40;
             this.camera.position.set(150, 120, 160);
