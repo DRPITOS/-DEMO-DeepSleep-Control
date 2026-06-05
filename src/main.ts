@@ -101,7 +101,7 @@ function updateUI() {
     }
 }
 
-// --- Bind Event Listeners (Now using 15 degree jumps!) ---
+// --- Bind Event Listeners (Now using 5 degree jumps!) ---
 document.getElementById('btn-head-down')?.addEventListener('click', () => adjust('head', -5));
 document.getElementById('btn-head-up')?.addEventListener('click', () => adjust('head', 5));
 

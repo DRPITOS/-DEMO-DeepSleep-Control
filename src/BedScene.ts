@@ -29,6 +29,7 @@ export class BedScene {
 
         this.scene = new THREE.Scene();
         this.renderer = new THREE.WebGLRenderer({alpha: true, antialias: true});
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
