@@ -6,11 +6,11 @@ import mqtt from 'mqtt';
 const myDeviceId = Math.random().toString(36).substring(2, 9);
 console.log('📱 App Started. My Device ID:', myDeviceId);
 
-const brokerUrl = 'wss://015e37a083744b579fbc7f07c7e8c904.s1.eu.hivemq.cloud:8884/mqtt';
+const brokerUrl = import.meta.env.MQTT_URL;
 
 const client = mqtt.connect(brokerUrl, {
-    username: 'Testmqtt',
-    password: 'Testmqtt1'
+    username: import.meta.env.MQTT_USERNAME,
+    password: import.meta.env.MQTT_PASSWORD
 });
 
 client.on('connect', () => {
