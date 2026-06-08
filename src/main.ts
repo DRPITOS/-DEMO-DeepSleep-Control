@@ -1,55 +1,71 @@
-import {BedScene} from './BedScene';
+import { BedScene } from './BedScene';
 import './style.css';
+import mqtt from 'mqtt';
 
-const bedEngine = new BedScene('canvas-container');
+// --- MQTT Setup ---
+const myDeviceId = Math.random().toString(36).substring(2, 9);
+console.log('📱 App Started. My Device ID:', myDeviceId);
 
-// --- State and Limits ---
-type Part = 'head' | 'thigh' | 'toe' | 'hug';
+const brokerUrl = 'wss://015e37a083744b579fbc7f07c7e8c904.s1.eu.hivemq.cloud:8884/mqtt';
 
-// The actual target angles for the bed
-const state: Record<Part, number> = {head: 0, thigh: 0, toe: 0, hug: 0};
-// The numbers currently visible on the screen
-const displayState: Record<Part, number> = {head: 0, thigh: 0, toe: 0, hug: 0};
-
-const limits: Record<Part, { min: number; max: number }> = {
-    head: {min: 0, max: 60},
-    thigh: {min: 0, max: 45},
-    toe: {min: -45, max: 40},
-    hug: {min: 0, max: 35}
-};
-
-const bedAngles = {
-    head: 0,
-    toe: 0,
-    thigh: 0,
-    hug: 0
-};
-
-// Function to send data
-async function updateBedPosition() {
-    try {
-        const response = await fetch('/api/bed-position', {
-            method: 'POST', // Use POST for sending data
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            // Send the actual 'state' object that holds your angles
-            body: JSON.stringify(state),
-        });
-        const result = await response.json();
-        console.log('Server response:', result);
-    } catch (error) {
-        console.error('Error sending position:', error);
-    }
-}
-
-// Attach this to your button click listeners
-document.getElementById('btn-head-up')?.addEventListener('click', () => {
-    bedAngles.head += 5; // Example logic
-    document.getElementById('head-val')!.innerText = `${bedAngles.head}°`;
-    updateBedPosition(); // SEND AFTER CHANGE
+const client = mqtt.connect(brokerUrl, {
+    username: 'Testmqtt',
+    password: 'Testmqtt1'
 });
 
+client.on('connect', () => {
+    console.log('✅ Successfully connected to HiveMQ Cloud!');
+    client.subscribe('bed/position/updates');
+});
+
+client.on('message', (topic, message) => {
+    if (topic === 'bed/position/updates') {
+        const payload = JSON.parse(message.toString());
+        console.log(`📥 Received from ${payload.senderId}:`, payload.angles);
+
+        // IGNORE OUR OWN MESSAGES to prevent stuttering
+        if (payload.senderId === myDeviceId) {
+            console.log('🔄 Ignored self-echo');
+            return;
+        }
+
+        // It's from another device! Update our target state.
+        state.head = payload.angles.head;
+        state.thigh = payload.angles.thigh;
+        state.toe = payload.angles.toe;
+        state.hug = payload.angles.hug;
+
+        console.log('🛏️ Updating UI from remote sync...');
+        updateUI(); // Animate the 3D bed and text
+    }
+});
+
+function publishBedPosition() {
+    const payload = {
+        senderId: myDeviceId,
+        angles: state
+    };
+    console.log('📤 Publishing new position:', payload);
+    // retain: true ensures new devices get the latest position immediately upon connecting
+    client.publish('bed/position/updates', JSON.stringify(payload), { retain: true });
+}
+
+// --- Scene and State ---
+const bedEngine = new BedScene('canvas-container');
+
+type Part = 'head' | 'thigh' | 'toe' | 'hug';
+
+const state: Record<Part, number> = { head: 0, thigh: 0, toe: 0, hug: 0 };
+const displayState: Record<Part, number> = { head: 0, thigh: 0, toe: 0, hug: 0 };
+
+const limits: Record<Part, { min: number; max: number }> = {
+    head: { min: 0, max: 60 },
+    thigh: { min: 0, max: 45 },
+    toe: { min: -45, max: 40 },
+    hug: { min: 0, max: 35 }
+};
+
+// --- Logic ---
 function adjust(part: Part, amount: number) {
     let newVal = state[part] + amount;
 
@@ -75,10 +91,10 @@ function adjust(part: Part, amount: number) {
     }
 
     updateUI();
-    updateBedPosition()
+    publishBedPosition(); // ONLY use MQTT to broadcast changes now
 }
 
-// --- Animation Loop for the UI Text ---
+// --- Animation Loop for UI Text ---
 let isAnimatingText = false;
 
 function animateNumbers() {
@@ -87,8 +103,6 @@ function animateNumbers() {
     (['head', 'thigh', 'toe', 'hug'] as Part[]).forEach(part => {
         if (displayState[part] !== state[part]) {
             stillAnimating = true;
-
-            // Step the visible number by 1 towards the target state
             if (displayState[part] < state[part]) displayState[part]++;
             else if (displayState[part] > state[part]) displayState[part]--;
 
@@ -98,7 +112,6 @@ function animateNumbers() {
     });
 
     if (stillAnimating) {
-        // Run this again in 15 milliseconds for a fast, smooth counter effect
         setTimeout(animateNumbers, 15);
     } else {
         isAnimatingText = false;
@@ -106,7 +119,6 @@ function animateNumbers() {
 }
 
 function updateUI() {
-    // 1. Update Button Disabled States based on the TARGET state
     const maxToe = state.thigh > 0 ? 0 : limits.toe.max;
     const minToe = -state.thigh;
 
@@ -122,17 +134,15 @@ function updateUI() {
     (document.getElementById('btn-hug-down') as HTMLButtonElement).disabled = (state.hug <= limits.hug.min);
     (document.getElementById('btn-hug-up') as HTMLButtonElement).disabled = (state.hug >= limits.hug.max);
 
-    // 2. Send targets to 3D Engine immediately for smooth Lerping
     bedEngine.setRotations(state.head, state.thigh, state.toe, state.hug);
 
-    // 3. Start the UI text counting animation if it isn't running
     if (!isAnimatingText) {
         isAnimatingText = true;
         animateNumbers();
     }
 }
 
-// --- Bind Event Listeners (Now using 5 degree jumps!) ---
+// --- Bind Event Listeners ---
 document.getElementById('btn-head-down')?.addEventListener('click', () => adjust('head', -5));
 document.getElementById('btn-head-up')?.addEventListener('click', () => adjust('head', 5));
 
@@ -151,7 +161,9 @@ document.getElementById('btn-reset')?.addEventListener('click', () => {
     state.toe = 0;
     state.hug = 0;
     updateUI();
-    // @ts-ignore - Assuming you added resetCamera to BedScene.ts previously
+    publishBedPosition(); // Ensure other devices reset too!
+
+    // @ts-ignore
     if (typeof bedEngine.resetCamera === 'function') bedEngine.resetCamera();
 });
 
