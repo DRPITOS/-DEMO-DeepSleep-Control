@@ -2,13 +2,16 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
     build: {
+        chunkSizeWarningLimit: 600,
         rollupOptions: {
             output: {
-                manualChunks: {
-                    // Put the heavy 3D engine in its own file
-                    three: ['three'],
-                    // Put the networking library in its own file
-                    mqtt: ['mqtt']
+                manualChunks(id) {
+                    if (id.includes('node_modules/three')) {
+                        return 'three';
+                    }
+                    if (id.includes('node_modules/mqtt')) {
+                        return 'mqtt';
+                    }
                 }
             }
         }
