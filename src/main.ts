@@ -11,11 +11,11 @@ if (!mqtt) {
 const myDeviceId = Math.random().toString(36).substring(2, 9);
 console.log('📱 App Started. My Device ID:', myDeviceId);
 
-const brokerUrl = import.meta.env.MQTT_URL;
+const brokerUrl = import.meta.env.VITE_MQTT_URL;
 
 const client = mqtt.connect(brokerUrl, {
-    username: import.meta.env.MQTT_USERNAME,
-    password: import.meta.env.MQTT_PASSWORD
+    username: import.meta.env.VITE_MQTT_USERNAME,
+    password: import.meta.env.VITE_MQTT_PASSWORD
 });
 
 client.on('connect', () => {
