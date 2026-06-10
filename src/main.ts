@@ -1,6 +1,11 @@
 import { BedScene } from './BedScene';
 import './style.css';
-import * as mqtt from "mqtt";
+
+const mqtt = (window as any).mqtt;
+
+if (!mqtt) {
+    console.error("MQTT library failed to load from the CDN!");
+}
 
 // --- MQTT Setup ---
 const myDeviceId = Math.random().toString(36).substring(2, 9);
@@ -18,7 +23,7 @@ client.on('connect', () => {
     client.subscribe('bed/position/updates');
 });
 
-client.on('message', (topic, message) => {
+client.on('message', (topic: string, message: any) => {
     if (topic === 'bed/position/updates') {
         const payload = JSON.parse(message.toString());
         console.log(`📥 Received from ${payload.senderId}:`, payload.angles);
