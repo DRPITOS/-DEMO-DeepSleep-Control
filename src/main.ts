@@ -1,6 +1,6 @@
 import { BedScene } from './BedScene';
 import './style.css';
-import mqtt from 'mqtt';
+import * as mqtt from "mqtt";
 
 // --- MQTT Setup ---
 const myDeviceId = Math.random().toString(36).substring(2, 9);
