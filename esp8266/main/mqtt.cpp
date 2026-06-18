@@ -1,5 +1,6 @@
 #include <ArduinoJson.h>
 #include "mqtt.h"
+#include "ack.h"
 
 void callback(char* topic, byte* payload, unsigned int length) {
   StaticJsonDocument<256> doc;
@@ -27,6 +28,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.printf("Head: %d, Thigh: %d, Toe: %d, Hug: %d\n", bedAngle[0], bedAngle[1], bedAngle[2], bedAngle[3]);
 
   digitalWrite(LED_BUILTIN, LOW);
+
+  needToSendAck = true;
 }
 
 void reconnect() {

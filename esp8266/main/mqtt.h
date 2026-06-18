@@ -11,6 +11,7 @@ extern const char* myDeviceId;
 extern PubSubClient client;
 extern const char* mqtt_user;
 extern const char* mqtt_pass;
+extern bool needToSendAck;
 
 void callback(char* topic, byte* payload, unsigned int length);
 void reconnect();

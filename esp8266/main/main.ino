@@ -4,9 +4,15 @@
 
 #include "wifi.h"
 #include "mqtt.h"
+#include "ack.h"
 
-const char* wifiSSID = "Homeonpa_2.4G";
-const char* wifiPassword = "witais123";
+// const char* wifiSSID = "Homeonpa_2.4G";
+// const char* wifiPassword = "witais123";
+
+const char* wifiSSID = "Wuth";
+const char* wifiPassword = "87654321";
+
+const String webURL = "https://demo-deep-sleep-control.vercel.app";
 
 WiFiClientSecure espClient;
 PubSubClient client(espClient);
@@ -18,6 +24,8 @@ const char* mqtt_pass = "Testmqtt1";
 
 int bedAngle[4] = { 0, 0, 0, 0 };
 unsigned long blinkTime = millis();
+
+bool needToSendAck = false;
 
 void setup() {
   Serial.begin(115200);
@@ -39,6 +47,11 @@ void loop() {
     reconnect();
   }
   client.loop();
+
+  if (needToSendAck) {
+    sendDataToWebsite();
+    needToSendAck = false;
+  }
 
   if (Serial.available() > 0) {
     char inchar = Serial.read();
