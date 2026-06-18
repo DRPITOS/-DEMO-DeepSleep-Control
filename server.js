@@ -12,6 +12,16 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
+app.put('/api/esp', (req, res) => {
+    const espData = req.body;
+    console.log('📡 Data received from ESP via PUT:', espData);
+
+    res.json({
+        status: 'success',
+        message: 'ESP data processed by Express',
+    });
+});
+
 app.get('/api/bed-position', (req, res) => {
     res.json([latestBedPosition]);
 });
