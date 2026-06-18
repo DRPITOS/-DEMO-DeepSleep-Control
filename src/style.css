@@ -127,10 +127,10 @@ html, body {
 
     .controls-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 10px;
         width: 95%;
-        max-width: 800px;
+        max-width: 700px;
         margin: 0 auto;
         margin-top: auto;
         margin-bottom: 20px;
@@ -273,7 +273,8 @@ button svg {
 
 /* Reset Button - Matched to new glass theme */
 .reset-card {
-    width: 100%; /* <--- Force full width */
+    width: 100%;
+    /*max-width: 250px;*/
     background: rgba(255, 255, 255, 0.45);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);

@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 
-// Defines a 4-segment column
 interface BedColumn {
     torso: THREE.Group;
     head: THREE.Group;
@@ -15,19 +14,24 @@ export class BedScene {
     private renderer: THREE.WebGLRenderer;
     private controls: OrbitControls;
 
-    // 3 Columns instead of 9 loose segments
-    private leftCol!: BedColumn;
-    private centerCol!: BedColumn;
-    private rightCol!: BedColumn;
+    // Master group for full bed tilt
+    private masterBedGroup: THREE.Group;
 
-    private targetRotations = {h: 0, thigh: 0, f: 0, hug: 0};
-    private currentRotations = {h: 0, thigh: 0, f: 0, hug: 0};
+    // Single column (4x1 model)
+    private bed!: BedColumn;
+
+    // Removed hug, kept tilt
+    private targetRotations = {h: 0, thigh: 0, f: 0, tilt: 0};
+    private currentRotations = {h: 0, thigh: 0, f: 0, tilt: 0};
 
     constructor(containerId: string) {
         const container = document.getElementById(containerId);
         if (!container) throw new Error(`Container #${containerId} not found`);
 
         this.scene = new THREE.Scene();
+        this.masterBedGroup = new THREE.Group();
+        this.scene.add(this.masterBedGroup);
+
         this.renderer = new THREE.WebGLRenderer({alpha: true, antialias: true});
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -41,7 +45,7 @@ export class BedScene {
         this.controls.dampingFactor = 0.05;
 
         this.setupLighting();
-        this.build3x4Bed();
+        this.build1x4Bed(); // Call the new 4x1 model builder
         this.adjustCameraForScreen();
 
         const resizeObserver = new ResizeObserver((entries) => {
@@ -49,7 +53,6 @@ export class BedScene {
                 const width = entry.contentRect.width;
                 const height = entry.contentRect.height;
 
-                // Prevent crashing if the container is temporarily hidden (0x0)
                 if (width > 0 && height > 0) {
                     this.camera.aspect = width / height;
                     this.adjustCameraForScreen();
@@ -81,86 +84,72 @@ export class BedScene {
         this.scene.add(floor);
     }
 
-    private build3x4Bed() {
+    private build1x4Bed() {
         const mattressMat = new THREE.MeshStandardMaterial({color: 0x2e3036, roughness: 0.9});
 
-        // New 4-Row Dimensions (Total length remains 145)
-        const w = 32, gap = 1.5, thick = 14;
+        // 4x1 Dimensions: Made the bed 96 units wide to match the old total width
+        const w = 96, gap = 1.5, thick = 14;
         const headL = 40, torsoL = 40, thighL = 30, footL = 35;
 
-        // Mathematical Column Generator
-        const createColumn = (baseX: number, pivotX: number, meshOffsetX: number): BedColumn => {
-            const colGroup = new THREE.Group();
-            colGroup.position.set(baseX + pivotX, 0, 0); // Sets the inward hug hinge point
+        const colGroup = new THREE.Group();
+        const torso = new THREE.Group();
+        colGroup.add(torso);
 
-            const torso = new THREE.Group();
-            colGroup.add(torso);
-
-            const createMesh = (l: number, offsetZ: number) => {
-                const mesh = new THREE.Mesh(new THREE.BoxGeometry(w - gap, thick, l - gap), mattressMat);
-                mesh.position.set(meshOffsetX, thick / 2, offsetZ);
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-                return mesh;
-            };
-
-            // 1. Torso (Fixed Root)
-            torso.add(createMesh(torsoL, 0));
-
-            // 2. Head (Hinged at top of Torso)
-            const head = new THREE.Group();
-            head.position.set(0, 0, -torsoL / 2);
-            head.add(createMesh(headL, -headL / 2));
-            torso.add(head);
-
-            // 3. Thigh (Hinged at bottom of Torso)
-            const thigh = new THREE.Group();
-            thigh.position.set(0, 0, torsoL / 2);
-            thigh.add(createMesh(thighL, thighL / 2));
-            torso.add(thigh);
-
-            // 4. Foot/Calf (Hinged at bottom of Thigh - chained movement!)
-            const foot = new THREE.Group();
-            foot.position.set(0, 0, thighL);
-            foot.add(createMesh(footL, footL / 2));
-            thigh.add(foot);
-
-            this.scene.add(colGroup);
-            return {torso, head, thigh, foot};
+        const createMesh = (l: number, offsetZ: number) => {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w - gap, thick, l - gap), mattressMat);
+            mesh.position.set(0, thick / 2, offsetZ);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            return mesh;
         };
 
-        // Generate the 3 columns with offset hinges for perfect folding
-        this.leftCol = createColumn(-w, w / 2, -w / 2);
-        this.centerCol = createColumn(0, 0, 0);
-        this.rightCol = createColumn(w, -w / 2, w / 2);
+        torso.add(createMesh(torsoL, 0));
 
-        // Base Frame
+        const head = new THREE.Group();
+        head.position.set(0, 0, -torsoL / 2);
+        head.add(createMesh(headL, -headL / 2));
+        torso.add(head);
+
+        const thigh = new THREE.Group();
+        thigh.position.set(0, 0, torsoL / 2);
+        thigh.add(createMesh(thighL, thighL / 2));
+        torso.add(thigh);
+
+        const foot = new THREE.Group();
+        foot.position.set(0, 0, thighL);
+        foot.add(createMesh(footL, footL / 2));
+        thigh.add(foot);
+
+        this.masterBedGroup.add(colGroup);
+        this.bed = {torso, head, thigh, foot};
+
+        // Solid Base
         const base = new THREE.Mesh(
-            new THREE.BoxGeometry((w * 3) + 4, 10, headL + torsoL + thighL + footL + 4),
+            new THREE.BoxGeometry(w + 4, 10, headL + torsoL + thighL + footL + 4),
             new THREE.MeshStandardMaterial({color: 0x5d4037, roughness: 0.6})
         );
         base.position.set(0, -5, 12.5);
         base.castShadow = true;
-        this.scene.add(base);
+        this.masterBedGroup.add(base);
 
-        // Single Centered Pillow attached to Head
+        // Single Wide Pillow
         const pillow = new THREE.Mesh(
-            new THREE.BoxGeometry(32, 6, 16),
-            new THREE.MeshStandardMaterial({color: 0xfcecd6, roughness: 1.0})
+            new THREE.BoxGeometry(32, 5, 14),
+            new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 1.0})
         );
         pillow.position.set(0, 17, -28);
         pillow.castShadow = true;
-        this.centerCol.head.add(pillow);
+        this.bed.head.add(pillow);
     }
 
-    public setRotations(headDeg: number, thighDeg: number, footDeg: number, hugDeg: number) {
+    public setRotations(headDeg: number, thighDeg: number, footDeg: number) {
         this.targetRotations.h = headDeg * (Math.PI / 180);
         this.targetRotations.thigh = thighDeg * (Math.PI / 180);
-
-        // Add the minus sign here! Negative UI value = Downward 3D bend
         this.targetRotations.f = -footDeg * (Math.PI / 180);
+    }
 
-        this.targetRotations.hug = hugDeg * (Math.PI / 180);
+    public updateTilt(angleInDegrees: number) {
+        this.targetRotations.tilt = angleInDegrees * (Math.PI / 180);
     }
 
     private animate = () => {
@@ -170,20 +159,17 @@ export class BedScene {
         this.currentRotations.h += (this.targetRotations.h - this.currentRotations.h) * lerpSpeed;
         this.currentRotations.thigh += (this.targetRotations.thigh - this.currentRotations.thigh) * lerpSpeed;
         this.currentRotations.f += (this.targetRotations.f - this.currentRotations.f) * lerpSpeed;
-        this.currentRotations.hug += (this.targetRotations.hug - this.currentRotations.hug) * lerpSpeed;
+        this.currentRotations.tilt += (this.targetRotations.tilt - this.currentRotations.tilt) * lerpSpeed;
 
-        const {h, thigh, f, hug} = this.currentRotations;
+        const {h, thigh, f, tilt} = this.currentRotations;
 
-        // Apply elevations perfectly across all 3 columns
-        [this.leftCol, this.centerCol, this.rightCol].forEach(col => {
-            col.head.rotation.x = h;
-            col.thigh.rotation.x = -thigh; // Negative X tilts UP
-            col.foot.rotation.x = f;       // Positive X tilts DOWN relative to Thigh
-        });
+        // Apply elevations directly to the single bed
+        this.bed.head.rotation.x = h;
+        this.bed.thigh.rotation.x = -thigh;
+        this.bed.foot.rotation.x = f;
 
-        // Apply inward Hug
-        this.leftCol.torso.rotation.z = -hug;
-        this.rightCol.torso.rotation.z = hug;
+        // Apply tilt to the entire bed assembly
+        this.masterBedGroup.rotation.z = tilt;
 
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
@@ -191,35 +177,27 @@ export class BedScene {
 
     public resetCamera() {
         const aspect = window.innerWidth / window.innerHeight;
-
         const targetPos = new THREE.Vector3();
         const targetFocus = new THREE.Vector3();
 
         if (aspect < 1) {
-            // Mobile defaults
             targetPos.set(180, 180, 280);
-            // YOUR CUSTOM PERFECT COORDINATES
             targetFocus.set(-15, -140, 0);
         } else {
-            // Desktop defaults
             targetPos.set(150, 120, 160);
             targetFocus.set(0, 0, 0);
         }
 
         const startPos = this.camera.position.clone();
         const startFocus = this.controls.target.clone();
-
         let progress = 0;
 
         const smoothMove = () => {
             progress += 0.03;
-
             if (progress < 1) {
                 const ease = 1 - Math.pow(1 - progress, 3);
-
                 this.camera.position.lerpVectors(startPos, targetPos, ease);
                 this.controls.target.lerpVectors(startFocus, targetFocus, ease);
-
                 this.controls.update();
                 requestAnimationFrame(smoothMove);
             } else {
@@ -228,17 +206,15 @@ export class BedScene {
                 this.controls.update();
             }
         };
-
         smoothMove();
     }
 
     private adjustCameraForScreen() {
         const aspect = this.camera.aspect;
-
         if (aspect < 1) {
             this.camera.fov = 60;
             this.camera.position.set(180, 180, 280);
-            this.controls.target.set(-15, -140, 0); // Your custom perfect coordinates
+            this.controls.target.set(-15, -140, 0);
         } else {
             this.camera.fov = 40;
             this.camera.position.set(150, 120, 160);
