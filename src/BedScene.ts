@@ -181,11 +181,13 @@ export class BedScene {
         const targetFocus = new THREE.Vector3();
 
         if (aspect < 1) {
-            targetPos.set(180, 180, 280);
-            targetFocus.set(-15, -140, 0);
+            this.camera.fov = 60;
+            targetPos.set(150, 120, 200);
+            targetFocus.set(-10, -50, 12.5); // Fixed Bed Center
         } else {
+            this.camera.fov = 40;
             targetPos.set(150, 120, 160);
-            targetFocus.set(0, 0, 0);
+            targetFocus.set(0, -15, 12.5); // Fixed Bed Center
         }
 
         const startPos = this.camera.position.clone();
@@ -211,14 +213,15 @@ export class BedScene {
 
     private adjustCameraForScreen() {
         const aspect = this.camera.aspect;
-        if (aspect < 1) {
+
+        if (aspect < 1) {           // Mobile
             this.camera.fov = 60;
-            this.camera.position.set(180, 180, 280);
-            this.controls.target.set(-15, -140, 0);
+            this.camera.position.set(150, 120, 200);
+            this.controls.target.set(-10, -50, 12.5);
         } else {
-            this.camera.fov = 40;
+            this.camera.fov = 40;   // Website
             this.camera.position.set(150, 120, 160);
-            this.controls.target.set(0, 0, 0);
+            this.controls.target.set(0, -15, 12.5);
         }
         this.controls.update();
         this.camera.updateProjectionMatrix();
