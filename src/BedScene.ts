@@ -183,7 +183,7 @@ export class BedScene {
         if (aspect < 1) {
             this.camera.fov = 60;
             targetPos.set(150, 120, 200);
-            targetFocus.set(-10, -50, 12.5); // Fixed Bed Center
+            targetFocus.set(-10, -90, 12.5); // Fixed Bed Center
         } else {
             this.camera.fov = 40;
             targetPos.set(150, 120, 160);
@@ -216,8 +216,8 @@ export class BedScene {
 
         if (aspect < 1) {           // Mobile
             this.camera.fov = 60;
-            this.camera.position.set(150, 120, 200);
-            this.controls.target.set(-10, -50, 12.5);
+            this.camera.position.set(200, 190, 300);
+            this.controls.target.set(-10, -90, 12.5);
         } else {
             this.camera.fov = 40;   // Website
             this.camera.position.set(150, 120, 160);
