@@ -182,7 +182,7 @@ export class BedScene {
 
         if (aspect < 1) {
             this.camera.fov = 60;
-            targetPos.set(150, 120, 200);
+            targetPos.set(200, 190, 300);
             targetFocus.set(-10, -90, 12.5); // Fixed Bed Center
         } else {
             this.camera.fov = 40;
